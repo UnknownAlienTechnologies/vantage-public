@@ -118,3 +118,7 @@ Email **joshualipovic@gmail.com** with:
 If it is a streaming problem, the app's **Diagnostics** screen shows frame counters for each stage of
 the pipeline — captured, encoded, delivered. The first stage that has stopped is where the problem
 is, and quoting those numbers makes it far quicker to identify.
+
+---
+
+[Privacy policy](./privacy)

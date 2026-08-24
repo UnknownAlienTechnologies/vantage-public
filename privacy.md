@@ -50,4 +50,7 @@ The app is not directed at children and collects no personal information from an
 
 ## Contact
 
-Questions about this policy: <!-- Replace with your contact email before publishing. -->
+Questions about this policy, or about anything the app does with your data:
+**[joshualipovic@gmail.com](mailto:joshualipovic@gmail.com)**
+
+See also the [support page](./).
