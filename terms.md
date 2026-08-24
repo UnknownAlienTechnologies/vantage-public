@@ -58,6 +58,7 @@ Questions, complaints or claims about Vantage should be directed to us, not to A
 
 - **Name:** Joshua Joseph Lipovic
 - **Postal address:** PO Box 46, Douglas Park NSW 2565, Australia
+- **Telephone:** +61 474 779 848
 - **Email:** joshualipovic@gmail.com
 
 If you believe Vantage has damaged a device, has caused injury, or has created a risk of either,
@@ -264,8 +265,9 @@ the same entitlement as high resolution.
 > **WARNING — heat, battery damage and fire hazard.**
 >
 > **What it does.** It disables the only thing Vantage does about heat, at every thermal state iOS
-> reports, including the most severe one. With it on, Vantage asks for the same bitrate on a hot
-> phone as on a cool one, for as long as it runs.
+> reports **except the most severe one**. With it on, Vantage asks for the same bitrate on a warm
+> phone as on a cool one, for as long as it runs. At the `critical` state the reduction always
+> applies and this setting has no effect — that floor cannot be switched off or bought past.
 >
 > **What can happen.** The phone runs hotter for longer than it otherwise would. That brings forward
 > the permanent battery capacity loss described in 6.1. Over months a heat-aged battery can swell,
@@ -281,8 +283,9 @@ It does not change how iOS manages heat, and it cannot; everything in 6.3 still 
 setting off is always available, whether or not you have bought Pro.
 
 **One thing to know about how it is stored.** The setting is saved on the phone and restored every
-time Vantage launches. It is restored without re-checking your Pro entitlement, so if it was on when
-an entitlement ended it stays on until someone turns it off in the app.
+time Vantage launches, so an unattended camera that reboots comes back the way you left it. It is
+re-checked against your Pro entitlement each time: if the entitlement has ended, the setting is
+switched off and the saved preference is cleared rather than kept.
 
 ## 7. Your network, and the local API
 
@@ -290,9 +293,11 @@ Vantage's control API and web page are reachable by anything on the same network
 token. Configuration changes made that way take effect on the phone, including changes that increase
 heat.
 
-**Bitrate and frame rate are not limited by your tier over the API.** The API accepts up to
-50,000 kbps and up to 240 fps, subject only to what the lens supports, so a token-holder can drive
-the phone harder than any preset in the app — on the free tier as well as Pro. Resolution and the
+**Frame rate is not limited by your tier over the API.** The API accepts up to 240 fps, subject to
+what the lens actually supports, so a token-holder can drive the phone harder than any preset in the
+app — on the free tier as well as Pro. A requested bitrate is capped against the current picture size
+rather than accepted as given, so a token-holder cannot pin the encoder far above a useful rate.
+Resolution and the
 setting in section 6.4 additionally require Pro.
 
 You are responsible for the security of your network, for keeping the API token secret, for the
@@ -308,9 +313,21 @@ turns the override on.
 
 ## 8. Vantage Pro (in-app purchase)
 
-Vantage is free to download. Vantage Pro is a single non-consumable in-app purchase, product
-identifier `com.joshlipovic.vantage.pro`. One purchase, no subscription. It is available to your
-family group where Family Sharing applies.
+Vantage is free to download. Vantage Pro is available two ways, and both unlock exactly the same
+features:
+
+- **A one-off purchase** — product identifier `com.joshlipovic.vantage.pro`. Bought once, yours
+  permanently, with no recurring charge.
+- **A monthly subscription** — product identifier `com.joshlipovic.vantage.pro.monthly`. It renews
+  automatically each month until you cancel, and cancelling takes effect at the end of the period
+  you have paid for. You can cancel at any time in Settings › [your name] › Subscriptions on your
+  device; we cannot cancel it for you, because we do not process the payment.
+
+Both are available to your family group where Family Sharing applies. Current prices are shown in
+the app before you buy, in your own currency.
+
+If you subscribe and later buy the one-off unlock, remember to cancel the subscription — it does not
+stop on its own, and we have no way to see or stop it.
 
 What it unlocks:
 
@@ -333,11 +350,17 @@ it afterwards.
 refund; refund requests go to Apple under the Apple Media Services Terms and Conditions. Prices are
 set through App Store Connect and may change.
 
-If your entitlement lapses, is refunded or is revoked, paid features stop being available for you to
-switch on. One exception you should know about: as section 6.4 explains, the "Ignore temperature"
-setting is saved on the device and restored at every launch without re-checking your entitlement, so
-if it was on when the entitlement ended it stays on until someone turns it off in the app. Turning it
-off is always available.
+If your entitlement lapses, is refunded or is revoked — including when a subscription simply reaches
+the end of a period you have not renewed — paid features stop being available. That includes the
+"Ignore temperature" setting described in section 6.4: it is switched off when the entitlement ends,
+whether that happens while the app is running or before it next launches, and the saved preference is
+cleared rather than held ready to resume. Turning it off is always available to you regardless of
+entitlement, because nobody should have to pay to make a phone cooler.
+
+This matters more with a subscription than with a one-off purchase, because a lapse becomes an
+ordinary monthly event rather than a rare one. The video resolution returns to the free limit in
+section 4 at the same time, so a recorder adopted at a higher resolution will need re-adopting to
+pick up the change.
 
 ## 9. Maintenance, support and updates
 

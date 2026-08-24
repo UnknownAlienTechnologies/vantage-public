@@ -301,9 +301,10 @@ authority or a manufacturer, and an unsourced instruction about a fire is worse 
 > ### ⚠ WARNING
 >
 > **Hazard.** With **Ignore temperature** switched on (Settings → Performance), Vantage substitutes a
-> "cool" reading for the phone's real thermal state at *every* level, including `critical`. Its own
-> bitrate reduction is therefore fully disabled at all temperatures, and the encoder is held at your
-> chosen quality while the phone is hot, for as long as it stays hot.
+> "cool" reading for the phone's real thermal state at the `fair` and `serious` levels. Its own
+> bitrate reduction is therefore disabled through those states, and the encoder is held at your
+> chosen quality while the phone is hot, for as long as it stays hot. At `critical` the reduction
+> always applies: that floor is not affected by this setting and cannot be switched off.
 >
 > **Consequence.** The phone runs hotter for longer than it otherwise would, which accelerates
 > everything in §4, brings §5 closer, and over a long period contributes to the margin erosion
@@ -508,11 +509,13 @@ to you.
 - **The thermal badge is invisible in the recommended mode.** The "Hot" / "Too hot" indicator sits in a
   strip hidden while the screen is dimmed, and dimming is what the documentation tells you to do. So in
   normal operation there is no visible heat warning on the phone. It should stay visible while dimmed.
-- **The Diagnostics thermal line does not account for the override.** It describes the bitrate as
-  reduced at `serious` and `critical` even when **Ignore temperature** has disabled that reduction.
-  That is a wrong statement on screen, not merely a missing one, and it needs to branch on the override.
-- **The in-app toggle can be stale.** A change made through the local API does not update the Settings
-  toggle. Until it does, `/api/state` (`thermal.isThrottlingIgnored`) is the reliable source (§7).
+- ~~**The Diagnostics thermal line does not account for the override.**~~ **Fixed.** It described the
+  bitrate as reduced at `serious` and `critical` even when **Ignore temperature** had disabled that
+  reduction — a wrong statement on screen rather than a missing one. It now reads "quality held
+  anyway" when the override is on.
+- ~~**The in-app toggle can be stale.**~~ **Fixed.** A change made through the local API did not
+  update the Settings toggle, so it could show OFF while the override was on. The toggle now reads
+  the engine's own copy, which is the single source of truth.
 
 **Delivery of this notice**
 - **The app does not link this notice.** Nothing in the setup wizard or Settings points to it, and the
@@ -552,6 +555,7 @@ the Vantage Pro purchase. None of that depends on you having read this document.
 
 Email: **joshualipovic@gmail.com**
 Postal: Joshua Joseph Lipovic, PO Box 46, Douglas Park NSW 2565, Australia
+Telephone: +61 474 779 848
 
 Please include the phone model, its iOS version, the app version, the resolution, frame rate and
 bitrate you were running, whether **Ignore temperature** was on, how the phone was mounted and
