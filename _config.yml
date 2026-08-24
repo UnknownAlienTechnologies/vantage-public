@@ -1,0 +1,8 @@
+# Minimal Jekyll config for GitHub Pages.
+#
+# A theme is set purely so the two pages render as readable HTML rather than raw Markdown —
+# App Store review follows these URLs and a wall of unstyled text reads as an unfinished
+# submission.
+theme: jekyll-theme-minimal
+title: Vantage
+description: Turn a spare iPhone into an ONVIF/RTSP security camera
