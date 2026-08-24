@@ -121,4 +121,9 @@ is, and quoting those numbers makes it far quicker to identify.
 
 ---
 
-[Privacy policy](./privacy)
+## Safety, terms and privacy
+
+**[Safety information](./safety)** — read this before mounting a phone and leaving it running. It
+explains what continuous camera use does to a phone's battery, and how to reduce the risk.
+
+[Terms of use](./terms) · [Privacy policy](./privacy)
