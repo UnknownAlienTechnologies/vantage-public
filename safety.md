@@ -107,12 +107,19 @@ useful. **Keep the ambient temperature around the phone between 0 °C and 35 °C
 is outside the range the manufacturer designed for, and the consequences below get materially worse.
 
 What the app does about heat, stated precisely. It lowers the video bitrate when iOS reports thermal
-pressure — to 60% of the target at the `serious` state and 35% at `critical`, with a floor of
-500 kbps below which it will not go. That is a quality reduction with a modest thermal benefit. It
-does not reduce frame rate or resolution, does not turn the display off, and never stops capture, and
-at low resolutions the 500 kbps floor means the reduction is small or nil. So it is not a substitute
-for the placement and settings choices in §10, and it is not what keeps the phone inside its limits —
-that is iOS and the hardware (§8).
+pressure — to 60% of the target at the `serious` state and 35% at `critical`, never below a floor that
+scales with the size of the picture: 500 kbps up to about a megapixel, proportionately higher above
+that. That is a quality reduction with a modest thermal benefit. It does not reduce the frame rate or
+resolution of the stream you configured, does not turn the display off, and never stops capture, and at
+low resolutions the 500 kbps floor means the reduction is small or nil. So it is not a substitute for
+the placement and settings choices in §10, and it is not what keeps the phone inside its limits — that
+is iOS and the hardware (§8).
+
+One exception, and it is the app's only measure that gives up work rather than quality: the smaller
+second stream, which the camera derives rather than you choosing it, halves its frame rate again at
+`serious` and stops being encoded altogether at `critical`, coming back on its own when the phone
+cools. It reads the temperature iOS reports rather than the value the override in §7 substitutes, so
+that setting cannot keep it running.
 
 ## 2. Continuous charging, and why hot plus full is worse than either
 
@@ -327,22 +334,29 @@ Three further facts about this setting, because each affects whether you can rel
 
 - **It is persistent, not per-session.** It is saved and restored when the app launches, so a phone
   left mounted keeps the override on across restarts indefinitely, without asking again.
-- **It can be set from your network, and the displays can be wrong.** Any device holding the app's
-  API token can enable it over the local HTTP API without touching the phone and without any
-  confirmation. The in-app toggle may then not reflect that change, and the Diagnostics screen's
-  thermal line describes the bitrate as reduced without accounting for the override, so neither
-  display confirms whether the reduction is active. Those are gaps in the app, listed as outstanding
-  work in §11, not responsibilities being passed to you — but until they are fixed, restrict the API
-  token to devices you control, because it is something that can make the phone hotter. The one
-  reliable check today is the local API: fetch `/api/state` with your token and read
-  `thermal.isThrottlingIgnored`. If it reads true and you did not set it, switch the toggle on and
-  then off in Settings → Performance to force it back to false.
-- **It is currently sold as part of Pro, and the purchase screen does not say so.** The override is
-  unlocked by the same Pro entitlement as HD and 4K, and that paywall describes resolution only. So
-  somebody can buy Pro for the picture quality and unlock this without ever being told what it does.
-  That is wrong, and ungating the setting is listed in §11 as outstanding work. In the meantime: if
-  you bought Pro for the picture quality and have never deliberately enabled this setting, check that
-  it is off by the method in the bullet above. Switching it off is free and always permitted.
+- **It can be set from your network, and switching it on in the app now asks first.** Any device
+  holding the camera's password — which is the one credential for the recorder, the web page and the
+  API alike — can enable it over the local HTTP API without touching the phone and without any
+  confirmation. In the app it cannot be switched on without a dialog stating the battery and fire
+  consequence. So restrict the password to devices you control: it is something that can make the
+  phone hotter. Enabling over the API being unconfirmed remains a gap, listed in §11.
+
+  **How to check whether it is on.** Open Settings in the app and read the toggle: it re-reads the
+  live value from the camera every time that screen appears, including a change made over the API
+  while you were elsewhere in the app. It does not update while you are already looking at it, so if
+  something may have changed it with that screen open, close it and open it again. Do not *tap* the
+  toggle to confirm it is off — tapping it turns it on. You can also fetch `/api/state` with your
+  password and read `thermal.isThrottlingIgnored`. What there is still no way to see is the state
+  without opening one of those two: nothing on the camera screen says the override is on, which is
+  the §11 item to close next.
+- **It is still sold as part of Pro, though the purchase screen now names it.** Enabling it presents
+  a paywall about the temperature override itself rather than one about 4K, so nobody is any longer
+  shown a screen about resolution for a thermal setting. But it is unlocked by the same entitlement as
+  HD and 4K, so somebody can buy Pro for the picture quality and acquire this without ever choosing
+  it, and the paywall names no consequence — it says what the setting does, not what it costs the
+  battery. Ungating it is listed in §11 as outstanding work. In the meantime: if you bought Pro for
+  the picture quality and have never deliberately enabled this setting, check that it is off by the
+  method above. Switching it off is free and always permitted.
 
 ## 8. What iOS does, whatever the app is set to
 
@@ -413,14 +427,26 @@ significant loss, use equipment built and certified for that purpose, and keep i
 The intended use is an unattended phone, so the safety instructions have to survive nobody being
 there. That means the conditions in §3 must be permanently true rather than true when you set it up.
 
-Do not rely on the app's on-screen indicators. The "Hot" and "Too hot" badges are hidden while the
-screen is dimmed, which is the mode this app recommends for continuous running, and the Diagnostics
-thermal line does not account for the override (§7, §11). Those are gaps we have to close, not checks
-you should be doing for us — but while they are open, the only trustworthy check is a physical one.
-Look at the phone in person from time to time, and at least monthly: feel whether it is hotter than it
-used to be at the same settings, look at the seams and the screen for the signs in §5, check the mount
-and the cable. Nothing here makes that inspection a condition of anything; it is the best available
-substitute for a display that currently does not work while dimmed.
+Do not rely on the app's on-screen indicators, even though they are better than they were. The "Hot"
+and "Too hot" warnings now stay visible while the screen is dimmed, which is the mode this app
+recommends for continuous running, and the Diagnostics thermal line no longer contradicts the override
+(§11). What they cannot do is tell you what temperature the phone has actually reached, or anything at
+all about the battery, the mount or the cable — and nothing on screen says whether the override in §7
+is on. **The only trustworthy check is a physical one.** Look at the phone in person from time to time,
+and at least monthly: feel whether it is hotter than it used to be at the same settings, look at the
+seams and the screen for the signs in §5, check the mount and the cable. Nothing here makes that
+inspection a condition of anything.
+
+**The app can notify you, and that is not supervision.** If the camera stops filming, the picture
+freezes, recording stops for good, or the servers stop listening, and the condition lasts about a
+minute, the app posts a notification on the camera phone itself. It is worth having — it timestamps the
+failure, so "it stopped some time in the last three days" becomes "it stopped at 02:14" — and it is
+worth being blunt about what it is not. It appears on that phone only; there is no service behind it
+that could reach another device. It requires the app to be running, so the failures that end with the
+app terminated, the phone rebooted, the battery flat or the phone powered off are precisely the ones
+that notify nobody. It says nothing about temperature, swelling or the mount. **Silence from it is not
+evidence that anything is well**, and it does not replace a single line of §3 or of the inspection
+above.
 
 A phone running Vantage should be sited on the assumption that it will one day be the thing that goes
 wrong: not on or near anything flammable, not the only smoke detection in the room, and within reach
@@ -488,39 +514,55 @@ quietly depends on a display that is wrong is worse than no warning — not to s
 to you.
 
 **Design and behaviour**
-- **There is no hard stop at any temperature.** The app never pauses or reduces frame rate or
-  resolution for heat by itself, at any thermal state, in any tier — only iOS does. The intended fixes
-  are to apply the bitrate reduction at `critical` unconditionally, regardless of the override, and to
-  pause capture with an on-screen reason if `critical` persists.
-- **The override is sold as part of Pro, behind a paywall that describes resolution.** It should not be
-  a paid feature at all, and the intended fix is to ungate it. See §7.
-- **The bitrate reduction is weak at low resolutions.** The 500 kbps floor means that on a small frame
-  there is little or no reduction left to make, so the free tier is not meaningfully better protected
-  than Pro. A floor set as a fraction of the requested bitrate would fix this.
-- **Bitrate is not capped for heat over the local API.** A client holding the API token can set up to
-  50 Mbps on any tier — more than twice the highest value the in-app picker offers — with no
-  entitlement check. Frame rate and resolution over the API *are* bounded by what the lens and your
-  tier allow, exactly as the in-app pickers are. Treat the token as something that can make the phone
-  hotter, and expect the bitrate ceiling to be capped.
-- **Enabling the override over the API is not gated or confirmed.** It can be switched on from the
-  network with no acknowledgement, and it should not be.
+- **There is still no hard stop for the stream you configured.** The bitrate reduction at `critical` is
+  now unconditional — the override cannot reach past that state — and the derived second stream halves
+  its rate at `serious` and stops at `critical` (§1). But nothing pauses capture or steps the main
+  stream's frame rate or resolution down, however long `critical` persists, in any tier. Pausing
+  capture with an on-screen reason at sustained `critical` is the remaining fix.
+- **The override is still sold as part of Pro.** It now has its own purchase screen rather than
+  borrowing the one about resolution, but it is unlocked by the same entitlement, and that screen names
+  no consequence. It should not be a paid feature at all, and the intended fix is to ungate it. See §7.
+- **The bitrate reduction is weak at low resolutions.** The floor now scales with the picture size,
+  which raises it above about a megapixel — but it is the greater of that and a flat 500 kbps, so at
+  720p and below the flat figure still wins and there is little or no reduction left to make. The free
+  tier is therefore not meaningfully better protected than Pro. A floor set as a fraction of the
+  requested bitrate would fix this.
+- ~~**Bitrate is not capped for heat over the local API.**~~ **Fixed.** A requested bitrate is clamped
+  against the current picture size, so the parser's 50 Mbps upper bound is no longer reachable in
+  effect. Frame rate and resolution over the API are bounded by what the lens and your tier allow, as
+  the in-app pickers are — though the frame-rate ceiling in the parser is still 240 fps, so on a lens
+  that offers a high rate the API can ask for more than any preset does. Treat the password as
+  something that can make the phone hotter.
+- **Enabling the override over the API is not gated or confirmed.** In the app it now requires a dialog
+  stating the consequence; over the network it can still be switched on with no acknowledgement, and it
+  should not be.
 
-**Displays that are wrong**
-- **The thermal badge is invisible in the recommended mode.** The "Hot" / "Too hot" indicator sits in a
-  strip hidden while the screen is dimmed, and dimming is what the documentation tells you to do. So in
-  normal operation there is no visible heat warning on the phone. It should stay visible while dimmed.
-- ~~**The Diagnostics thermal line does not account for the override.**~~ **Fixed.** It described the
-  bitrate as reduced at `serious` and `critical` even when **Ignore temperature** had disabled that
-  reduction — a wrong statement on screen rather than a missing one. It now reads "quality held
-  anyway" when the override is on.
+**Displays**
+- **There is no indicator that the override is on.** Nothing on the camera screen says so, dimmed or
+  not, so a standing condition of the phone is invisible unless Settings or the local API is opened
+  (§7). A persistent "Heat ignored" indicator is the fix, and it is the next display item to close.
+- ~~**The thermal badge is invisible in the recommended mode.**~~ **Fixed.** The "Hot" / "Too hot"
+  warning now renders on the dimmed screen as well as in the strip, along with a frozen picture and a
+  recorder that has stopped for good, so the mode this document recommends is no longer the mode with
+  no heat warning in it.
+- ~~**The Diagnostics thermal line does not account for the override.**~~ **Fixed, in the direction
+  that mattered.** It described the bitrate as reduced at `serious` and `critical` even when **Ignore
+  temperature** had disabled that reduction. It now says the quality is being held at `serious`, and
+  reports the reduction at `critical`, where the override has no effect. It still asserts "reduced"
+  from the thermal state rather than from the bitrate actually applied, so at 480p, where the floor
+  means nothing was reduced, it overstates the protection.
 - ~~**The in-app toggle can be stale.**~~ **Fixed.** A change made through the local API did not
-  update the Settings toggle, so it could show OFF while the override was on. The toggle now reads
-  the engine's own copy, which is the single source of truth.
+  update the Settings toggle, so it could show OFF while the override was on. The toggle now re-reads
+  the engine's own value every time the screen appears — though not while you are already looking at
+  it (§7).
 
 **Delivery of this notice**
-- **The app does not link this notice.** Nothing in the setup wizard or Settings points to it, and the
-  App Store description does not summarise the heat and battery position. Both should, and the Pro
-  purchase screen should state the hazard in §7 before payment rather than after.
+- ~~**The app does not link this notice.**~~ **Fixed.** The setup wizard shows the warning before the
+  password step, Settings carries both a standing "Safety information" row — which opens this text
+  *in the app*, so it can be read with the phone off the network — and a prompt at the top of the sheet
+  when the wording has been revised since it was acknowledged. The App Store description now carries
+  the heat and battery paragraph. **Left:** the Pro purchase screen still states no hazard, and someone
+  who never opens Settings never sees a revised warning.
 - **It is English-only.** The app ships worldwide. Safety information should be in a language the
   reader understands (EU General Product Safety Regulation 2023/988, Art 9(7)), and translations for
   the main storefront languages do not yet exist.

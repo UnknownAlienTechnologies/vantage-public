@@ -113,12 +113,26 @@ Facts about how it works that bear on what you can reasonably expect of it:
 - **It requires iOS 17 or later.**
 - **iOS can interrupt it at any time**, including for thermal reasons, system pressure, an incoming
   call, or another app taking the camera. Capture will resume when it can, but it can stop.
-- **The free tier streams up to 640×480** and one simultaneous viewer, and keeps up to one hour of
-  on-device recordings. The Pro purchase raises those limits (see section 8).
+- **The free tier streams up to 640×480** — measured on the longer side, whichever way round the
+  picture is — and one simultaneous viewer, and keeps up to one hour of on-device recordings. There is
+  no frame-rate limit by tier. The Pro purchase raises those limits (see section 8).
+- **A recorder taking both stream qualities counts as one viewer.** The camera normally offers a main
+  and a smaller second stream, and a recorder pulling both opens two connections; those two are one
+  viewer for the purpose of the limit above. Two separate clients taking the *same* stream are two
+  viewers, even from the same address.
 - **Resource limits apply regardless of tier.** The RTSP listener accepts a fixed maximum number of
-  simultaneous connections, currently 16, whatever your tier. On-device recording deletes the oldest
-  clips first to stay within a bounded amount of storage, so older footage is overwritten in normal
-  operation. We may change these technical limits.
+  simultaneous connections, currently 16, whatever your tier; a connection beyond that is closed
+  rather than answered. On-device recording deletes the oldest clips first to stay within a bounded
+  amount of storage, so older footage is overwritten in normal operation. We may change these
+  technical limits.
+- **Vantage can notify you on the camera phone, and that is not an alerting service.** If the camera
+  stops filming, the picture freezes, recording stops or the servers become unreachable, and the
+  condition lasts, the app can post a local notification on that phone. It requires your permission,
+  it appears on that phone only, and nothing about it leaves the device — there is no push service and
+  no server of ours involved. It cannot work when the app is not running: a phone that has crashed,
+  been terminated by iOS, run out of power or rebooted notifies you of nothing, and neither does one
+  whose battery has died. Do not rely on these notifications, and do not treat their absence as
+  evidence the camera is working.
 - **The local network is part of the trust boundary.** The control API and web page are plain HTTP
   with no TLS. iOS provides no certificate-generation API, so TLS on a home network would mean
   shipping a self-signed certificate and asking you to click through a browser warning; we judged
@@ -179,14 +193,18 @@ leave it running.
    that position.
 8. **Attention.** Look at the phone in person at least once a month. Feel whether it is hotter than
    it used to be at the same settings; check the seams and the screen for the bulging described in
-   the Safety Notice; check the mount and the cable. **Do not rely on the app's "Hot" and "Too hot"
-   badges — they are hidden while the screen is dimmed, which is the mode we recommend for continuous
-   running.** Stop and unplug the phone if it is unusually hot to touch, if the case is deforming or
-   bulging, or if there is any smell, smoke or discolouration.
-9. **Network access.** Anything on your network holding the API token can change Vantage's
-   configuration, including settings that increase heat. You are responsible for who and what is on
-   your network, for keeping the token secret, and for commands issued to the local API — see
-   section 7.
+   the Safety Notice; check the mount and the cable. The app's "Hot" and "Too hot" badges now stay
+   visible while the screen is dimmed, which is the mode we recommend for continuous running — but
+   **they are not a substitute for looking at the phone**: they report what iOS says about
+   temperature, not the condition of the battery or the mount, and neither they nor the app's
+   notifications can tell you anything once the app has stopped running. Stop and unplug the phone if
+   it is unusually hot to touch, if the case is deforming or bulging, or if there is any smell, smoke
+   or discolouration.
+9. **Network access.** Anything on your network holding the camera's password can change Vantage's
+   configuration, including settings that increase heat, and can watch and listen to the camera. That
+   one password is the whole credential — for your recorder, the web page and the local API alike —
+   so you are responsible for who and what is on your network, for keeping it secret, and for commands
+   issued to the local API. See section 7.
 10. **Legal use.** Use Vantage only in accordance with applicable law, including the recording law
     referred to in section 4.
 
@@ -228,12 +246,17 @@ when that state rises. That is the entirety of its thermal behaviour, and it is 
 Vantage itself does about heat. Specifically:
 
 - The reduction is to 60% of the target bitrate at the state iOS calls *serious* and 35% at
-  *critical*, but never below 500 kbps.
+  *critical*, but never below a floor that depends on the size of the picture: 500 kbps for anything
+  up to about a megapixel, and proportionately higher above that.
 - Because of that floor the reduction is small or nil at low resolutions. At the free tier's
   640×480 it is around 16%, and *critical* is no stricter than *serious*.
-- The thermal state is re-read only while frames are being encoded.
-- It does not reduce frame rate or resolution, does not turn the torch or the screen off, and does
-  not stop capturing, at any temperature.
+- It does not reduce the frame rate or resolution of the stream you configured, does not turn the
+  torch or the screen off, and does not stop capturing, at any temperature. The one exception is the
+  smaller second stream, which nobody configures: its frame rate is halved again at *serious* and it
+  stops being encoded and served at *critical*, returning by itself when the phone cools. The setting
+  in section 6.4 does not affect that.
+- The thermal state is read on the encoding path and also whenever iOS reports that it has changed,
+  so it is re-evaluated even if frames have stopped arriving.
 
 So it is a reduction in output quality that helps a little, at higher resolutions, some of the time.
 It is not the protection that stands between a phone and overheating — the device's own protections,
@@ -289,27 +312,37 @@ switched off and the saved preference is cleared rather than kept.
 
 ## 7. Your network, and the local API
 
-Vantage's control API and web page are reachable by anything on the same network that holds the API
-token. Configuration changes made that way take effect on the phone, including changes that increase
-heat.
+Vantage's control API and web page are reachable by anything on the same network that holds the
+camera's password. **There is one credential, not two:** the password you set for your recorder is
+also the credential for the web page and the API, sent as a bearer token, a header or a query
+parameter. Configuration changes made that way take effect on the phone, including changes that
+increase heat.
+
+What holding it allows, so the responsibility below is not abstract: reading and changing every
+camera setting, taking a still image, playing the video stream, and — while the microphone is on —
+listening to the live sound of the room, at `/api/listen`, without opening the video. Two endpoints
+are deliberately readable without it (`/health` and `/diag`), and they carry no video, no audio and no
+credentials; they exist so a frozen picture can be diagnosed at the moment nothing else is working.
 
 **Frame rate is not limited by your tier over the API.** The API accepts up to 240 fps, subject to
-what the lens actually supports, so a token-holder can drive the phone harder than any preset in the
-app — on the free tier as well as Pro. A requested bitrate is capped against the current picture size
-rather than accepted as given, so a token-holder cannot pin the encoder far above a useful rate.
-Resolution and the
-setting in section 6.4 additionally require Pro.
+what the lens actually supports, so a password-holder can drive the phone harder than any preset in
+the app — on the free tier as well as Pro. A requested bitrate is capped against the current picture
+size rather than accepted as given, so a password-holder cannot pin the encoder far above a useful
+rate. Resolution and the setting in section 6.4 additionally require Pro. The setting in 6.4 can be
+switched on over the API without the confirmation the in-app toggle requires.
 
-You are responsible for the security of your network, for keeping the API token secret, for the
+You are responsible for the security of your network, for keeping that password secret, for the
 devices and scripts you allow to hold it, and for the configuration changes made through it —
 including ones made by an automation you set up, or by another person or device to whom you gave the
-token. The connection is not encrypted; treat the network itself as part of the boundary.
+password. The connection is not encrypted; treat the network itself as part of the boundary.
 
-**Checking whether the setting in section 6.4 is off.** The in-app toggle can show the setting as off
-after it has been enabled over the local API, so the toggle is not a reliable check on its own. Force
-quit and reopen Vantage and then look at the toggle, or read `thermal.isThrottlingIgnored` from the
-local API. Do not tap the toggle to "confirm" it is off: if it is showing the wrong state, tapping it
-turns the override on.
+**Checking whether the setting in section 6.4 is off.** Open Settings in the app and look at the
+toggle. It re-reads the live value from the camera each time the screen appears, so what it shows
+when you open it is what is in force — including a change made over the local API while the app was
+on another screen. What it does not do is update itself while you are already looking at it: if
+something changes the setting over the API with Settings open in front of you, close the screen and
+open it again. You can also read `thermal.isThrottlingIgnored` from the local API. Either way, do
+not tap the toggle to "confirm" it is off — tapping it turns the override on.
 
 ## 8. Vantage Pro (in-app purchase)
 
@@ -332,7 +365,8 @@ stop on its own, and we have no way to see or stop it.
 What it unlocks:
 
 - **HD and custom formats** — 720p, 1080p, and up to 4K, plus custom formats.
-- **Auto light** — light up automatically when something moves in the dark.
+- **Auto light** — light up automatically when something moves in the dark. What Pro buys here is the
+  *light*: movement detection itself runs on every tier, paid or not.
 - **API and Home Assistant** — a REST API and a flat JSON endpoint.
 - **Audio and two-way talk** — audio with the video, and talk through the phone's speaker.
 - **Multiple viewers** — more than one simultaneous viewer, so a recorder and a live viewer can
