@@ -351,12 +351,12 @@ features:
 
 - **A one-off purchase** — product identifier `com.joshlipovic.vantage.pro`. Bought once, yours
   permanently, with no recurring charge.
-- **A monthly subscription** — product identifier `com.joshlipovic.vantage.pro.monthly`. It renews
+- **A monthly subscription** — product identifier `com.joshlipovic.vantage.sub.pro`. It renews
   automatically each month until you cancel, and cancelling takes effect at the end of the period
   you have paid for. You can cancel at any time in Settings › [your name] › Subscriptions on your
   device; we cannot cancel it for you, because we do not process the payment.
 
-Both are available to your family group where Family Sharing applies. Current prices are shown in
+Neither is shared through Family Sharing: a purchase unlocks Pro for the Apple Account that made it, on that account's devices. Current prices are shown in
 the app before you buy, in your own currency.
 
 If you subscribe and later buy the one-off unlock, remember to cancel the subscription — it does not
